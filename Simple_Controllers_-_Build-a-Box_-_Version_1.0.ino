@@ -142,8 +142,9 @@ void loop()
     if (digitalRead(Y1) == LOW && digitalRead(Y2) == HIGH)pinyAxis = 128 + Y2v;
     if (digitalRead(Y1) == LOW && digitalRead(Y2) == LOW)pinyAxis = 128 + Y3v;
   }
+  //UPDATE: changed this to 4 because it now allows Axe style shield drops, This is way faster and more accurate.
   if (digitalRead(DOWN) == LOW && digitalRead(UP) == HIGH){
-    pinyAxis = 0;
+    pinyAxis = 4;
     if (digitalRead(Y1) == HIGH && digitalRead(Y2) == LOW)pinyAxis = 128 - Y1v;
     if (digitalRead(Y1) == LOW && digitalRead(Y2) == HIGH)pinyAxis = 128 - Y2v;
     if (digitalRead(Y1) == LOW && digitalRead(Y2) == LOW)pinyAxis = 128 - Y3v;
