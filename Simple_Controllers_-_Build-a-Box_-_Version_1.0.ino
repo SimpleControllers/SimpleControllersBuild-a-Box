@@ -23,8 +23,7 @@ const int START = 31;
 const int R = 34;
 const int L = 35;
 const int RLIGHT = 36;
-//This is the value of analog shielding 74 is lightest possible on gamecube.  it varies from gamecube to dolphin no idea why..
-//if this does not work on your system or something like that keep raising it by 1 until it works.
+//This is the value of analog shielding 74 is lightest possible on gamecube.  It varies from gamecube to dolphin no idea why.
 const int RLIGHTv = 74;
 
 const int LEFT = 38;
@@ -32,7 +31,8 @@ const int RIGHT = 39;
 const int UP = 40;
 const int DOWN = 41;
 
-//Side note I may have mixed up X1 and X2 here, along with Y1 and Y2 so change it to your liking physically or in the code itself.
+//NEW!! Fixed the mixup of X1 and X2 buttons, they now correspond to the correct buttons.  
+//If you are updating from 1.0/1.1 you might have to change the internal pins on your box or just swap the pin numbers here.
 const int X1 = 44;
 const int X2 = 45;
 const int Y1 = 46;
@@ -51,6 +51,9 @@ const int CLEFT = 48;
 const int CRIGHT = 49;
 const int CUP = 50;
 const int CDOWN = 51;
+
+//THIS IS THE SWITCH/BUTTON TO TOGGLE MODIFIERS (X1, X2, Y1, Y2) TO DPAD
+const int SWITCH = 12;
 
 void setup()
 {
@@ -80,6 +83,8 @@ void setup()
   pinMode(CRIGHT, INPUT_PULLUP);
   pinMode(CUP, INPUT_PULLUP);
   pinMode(CDOWN, INPUT_PULLUP);
+
+  pinMode(SWITCH, INPUT_PULLUP);
 
   //This is needed to run the code.
   GamecubeController1.read();
@@ -121,33 +126,52 @@ void loop()
   int xmod = 0;
   int pinyAxis = 128;
 
+  int rightOne = 0;
+  int leftOne = 0;
+  int downOne = 0;
+
+  int pinSWITCH = 0;
 
   //This reads control stick as neutral when both left/right or up/down is pressed at the same time.  Also sets parameters for the diffrent analog tilt modifiers IE: X1+X2 = X3
+  //UPDATE: NOW CORRESPONDS TO PROPER SMASHBOX ANGLES
   if (digitalRead(LEFT) == HIGH && digitalRead(RIGHT) == LOW){
-    pinxAxis = 255;
-    if (digitalRead(X1) == HIGH && digitalRead(X2) == LOW)pinxAxis = X1v + 128;
-    if (digitalRead(X1) == LOW && digitalRead(X2) == HIGH)pinxAxis = X2v + 128;
+    pinxAxis = 128+86;
+    if (digitalRead(X1) == LOW && digitalRead(X2) == HIGH)pinxAxis = X1v + 128;
+    if (digitalRead(X1) == HIGH && digitalRead(X2) == LOW)pinxAxis = X2v + 128;
     if (digitalRead(X1) == LOW && digitalRead(X2) == LOW)pinxAxis = X3v + 128;
+    rightOne = 1;
   }
   if (digitalRead(LEFT) == LOW && digitalRead(RIGHT) == HIGH){
-    pinxAxis = 0;
-    if (digitalRead(X1) == HIGH && digitalRead(X2) == LOW)pinxAxis = 128 - X1v;
-    if (digitalRead(X1) == LOW && digitalRead(X2) == HIGH)pinxAxis = 128 - X2v;
+    pinxAxis = 128-86;
+    if (digitalRead(X1) == LOW && digitalRead(X2) == HIGH)pinxAxis = 128 - X1v;
+    if (digitalRead(X1) == HIGH && digitalRead(X2) == LOW)pinxAxis = 128 - X2v;
     if (digitalRead(X1) == LOW && digitalRead(X2) == LOW)pinxAxis = 128 - X3v;
+    leftOne = 1;
   }
     
   if (digitalRead(DOWN) == HIGH && digitalRead(UP) == LOW){
-    pinyAxis = 255;
-    if (digitalRead(Y1) == HIGH && digitalRead(Y2) == LOW)pinyAxis = 128 + Y1v;
-    if (digitalRead(Y1) == LOW && digitalRead(Y2) == HIGH)pinyAxis = 128 + Y2v;
+    pinyAxis = 128+86;
+    if (digitalRead(Y1) == LOW && digitalRead(Y2) == HIGH)pinyAxis = 128 + Y1v;
+    if (digitalRead(Y1) == HIGH && digitalRead(Y2) == LOW)pinyAxis = 128 + Y2v;
     if (digitalRead(Y1) == LOW && digitalRead(Y2) == LOW)pinyAxis = 128 + Y3v;
   }
-  //UPDATE: changed this to 4 because it now allows Axe style shield drops, This is way faster and more accurate.
   if (digitalRead(DOWN) == LOW && digitalRead(UP) == HIGH){
-    pinyAxis = 4;
-    if (digitalRead(Y1) == HIGH && digitalRead(Y2) == LOW)pinyAxis = 128 - Y1v;
-    if (digitalRead(Y1) == LOW && digitalRead(Y2) == HIGH)pinyAxis = 128 - Y2v;
+    pinyAxis = 128-86;
+    if (digitalRead(Y1) == LOW && digitalRead(Y2) == HIGH)pinyAxis = 128 - Y1v;
+    if (digitalRead(Y1) == HIGH && digitalRead(Y2) == LOW)pinyAxis = 128 - Y2v;
     if (digitalRead(Y1) == LOW && digitalRead(Y2) == LOW)pinyAxis = 128 - Y3v;
+    downOne = 1;
+  }
+
+  //NEW: Axe Shield Drops
+  if (digitalRead(X1) == HIGH && digitalRead(X2) == HIGH && digitalRead(Y1) == HIGH && digitalRead(Y2) == HIGH && downOne == 1 && leftOne == 1){
+    pinxAxis = 128-80;
+    pinyAxis = 128-78;
+  }
+
+  if (digitalRead(X1) == HIGH && digitalRead(X2) == HIGH && digitalRead(Y1) == HIGH && digitalRead(Y2) == HIGH && downOne == 1 && rightOne == 1){
+    pinxAxis = 128+80;
+    pinyAxis = 128-78;
   }
 
   //Reads CStick pins, same logic as controlstick values.
@@ -167,6 +191,22 @@ void loop()
   //This is for digital shield
   if (digitalRead(R) == LOW)pinR = 1;
   if (digitalRead(L) == LOW)pinL = 1;
+
+  if (digitalRead(SWITCH) == LOW)pinSWITCH = 1;
+
+  d.report.dup = 0;
+  d.report.dright = 0;
+  d.report.ddown = 0;
+  d.report.dleft = 0;
+    
+  //NEW WHEN SWITCH/BUTTON ON PIN 12 IS PRESSED/ACTIVATED SWAPS X1,X2,Y1,Y2 TO DPAD 
+  if (pinSWITCH == 1){
+    if(digitalRead(X1) == LOW)d.report.dleft = 1;
+    if(digitalRead(X2) == LOW)d.report.ddown = 1;
+    if(digitalRead(Y1) == LOW)d.report.dup = 1;
+    if(digitalRead(Y2) == LOW)d.report.dright = 1;
+  }
+  
 
 
   //reports data
