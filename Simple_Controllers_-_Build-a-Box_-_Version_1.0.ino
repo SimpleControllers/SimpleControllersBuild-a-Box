@@ -4,6 +4,7 @@
  * Code written by Simple Controllers and this code is open source.
  * Meaning its free to share, improve on, or anything you like!
  * Just remember to mention you used my code!
+ * Version 2.0 I just suck at github
  */
 //This makes the controller bidirection data line on pin number8
 CGamecubeConsole GamecubeConsole(8);      //Defines a "Gamecube Console" sending data to the console on pin 8
